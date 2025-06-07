@@ -29,25 +29,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Función para aplicar el rol seleccionado
     const applySelectedRole = () => {
-        const selectedValue = roleSelect.value;
-        let currentUserRole;
-        let currentUserCircunscripcionId = null;
-        let currentUserRecintoId = null;
+        const selectedOption = roleSelect.options[roleSelect.selectedIndex]; // Get the selected <option> element
+        const currentUserRole = selectedOption.value; // The basic role (admin, candidato, jefe_recinto, delegado, dirigente)
 
-        // Parsear el valor seleccionado para extraer rol y IDs si es necesario
-        if (selectedValue.includes('_C')) {
-            currentUserRole = selectedValue.split('_')[0];
-            currentUserCircunscripcionId = selectedValue.split('_')[1];
-        } else if (selectedValue.includes('_R')) {
-            currentUserRole = selectedValue.split('_')[0];
-            currentUserRecintoId = selectedValue.split('_')[1];
-            // Para delegado, si está asignado a un recinto, también podemos obtener la circunscripción de ese recinto
+        // Get data attributes directly from the selected option
+        let currentUserCircunscripcionId = selectedOption.dataset.circunscripcionId || null;
+        let currentUserRecintoId = selectedOption.dataset.recintoId || null;
+
+        // If a recinto is selected, derive its circunscripcion_id if not explicitly set
+        if (currentUserRecintoId && !currentUserCircunscripcionId) {
             currentUserCircunscripcionId = recintosData.find(r => r._id === currentUserRecintoId)?.circunscripcion_id || null;
-        } else {
-            currentUserRole = selectedValue;
         }
 
-        // Actualizar la UI según el rol
+        // Actualizar la UI según el rol (visibilidad de navegación y apariencia)
         updateUIByRole(currentUserRole);
 
         // Limpiar contenido de dashboards antes de mostrar nueva información
@@ -57,26 +51,28 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('actas-review-view').innerHTML = '';
 
         // Mostrar información específica del rol
-        if (currentUserRole === 'candidato_circunscripcion') {
+        if (currentUserRole === 'candidato') { // Changed from 'candidato_circunscripcion' to 'candidato'
             displayCandidatoInfo(currentUserCircunscripcionId);
         } else if (currentUserRole === 'jefe_recinto') {
             displayJefeRecintoInfo(currentUserRecintoId);
         } else if (currentUserRole === 'delegado') {
             // Para el delegado, buscamos su asignación real en los usuariosData
-            const delegadoTest = usuariosData.find(u => u.rol === 'delegado' && u.recinto_asignado_id === currentUserRecintoId);
+            // y usamos el recintoId del data-attribute o el R001 por defecto si no hay asignación
+            const targetRecintoId = currentUserRecintoId || 'R001'; // Use R001 as default if no specific ID in data-attribute
+            const delegadoTest = usuariosData.find(u => u.rol === 'delegado' && u.recinto_asignado_id === targetRecintoId);
+            
             if (delegadoTest) {
-                displayDelegadoInfo(delegadoTest.recinto_asignado_id);
+                // Pass the found delegate's assigned recinto and their own _id and mesa_numero
+                displayDelegadoInfo(delegadoTest.recinto_asignado_id, delegadoTest._id, delegadoTest.mesa_asignada_numero);
             } else {
-                // Si no se encuentra una asignación específica, usar la primera del R001 por defecto para la demo
-                const defaultDelegado = usuariosData.find(u => u.rol === 'delegado' && u.recinto_asignado_id === 'R001');
-                if (defaultDelegado) {
-                    displayDelegadoInfo(defaultDelegado.recinto_asignado_id);
-                } else {
-                    document.getElementById('actas-upload-view').innerHTML = `<p>No hay un delegado de prueba asignado para mostrar.</p>`;
-                }
+                document.getElementById('actas-upload-view').innerHTML = `<p>No hay un delegado de prueba asignado para el recinto ${targetRecintoId}.</p>
+                                                                        <p>Intente seleccionar un rol de delegado con un recinto asignado como "Delegado (R001, Mesa 5)" o "Delegado (R003, Mesa 1)".</p>`;
             }
         } else if (currentUserRole === 'dirigente') {
             displayDirigenteInfo(currentUserCircunscripcionId);
+        } else if (currentUserRole === 'admin') {
+            // Admin role doesn't need specific data display initially, just shows map and all nav options
+            // No specific dashboard info for admin on load other than map
         }
 
         // Mostrar el mapa por defecto al cambiar de rol para que se vea la diferencia
@@ -114,11 +110,14 @@ async function loadRecintos() {
             console.warn(`Recinto ${recinto._id || recinto.id} no tiene numero_mesas. Asumiendo 1 mesa.`);
             recinto.numero_mesas = 1;
         }
-
-        const requiredDelegates = recinto.numero_mesas * delegadosPorMesa;
         
+        // Calculate required delegates if not already present in data
+        if (!recinto.delegados_requeridos) {
+            recinto.delegados_requeridos = recinto.numero_mesas * delegadosPorMesa;
+        }
+
         let fillColor;
-        if (recinto.delegados_asignados >= requiredDelegates) {
+        if (recinto.delegados_asignados >= recinto.delegados_requeridos) { // Use recinto.delegados_requeridos
             fillColor = '#28a745';
         } else if (recinto.delegados_asignados > 0) {
             fillColor = '#ffc107';
@@ -132,9 +131,9 @@ async function loadRecintos() {
                 "id": recinto._id || recinto.id, // Usa _id o id
                 "name": recinto.nombre,
                 "mesas": recinto.numero_mesas,
-                "delegados_requeridos": requiredDelegates,
+                "delegados_requeridos": recinto.delegados_requeridos, // Use the calculated/stored value
                 "delegados_asignados": recinto.delegados_asignados,
-                "cobertura": (recinto.delegados_asignados / requiredDelegates * 100).toFixed(0) + '%'
+                "cobertura": (recinto.delegados_asignados / recinto.delegados_requeridos * 100).toFixed(0) + '%'
             },
             "geometry": recinto.ubicacion_geojson
         };
@@ -235,7 +234,7 @@ function updateUIByRole(role) {
                 link.style.opacity = '1';
             });
             break;
-        case 'candidato_circunscripcion':
+        case 'candidato': // Changed from 'candidato_circunscripcion'
             navDelegados.classList.remove('hidden');
             navActas.classList.remove('hidden');
             // Habilitar pestañas específicas
@@ -284,7 +283,6 @@ function displayCandidatoInfo(circunscripcionId) {
     const delegadosDashboard = document.getElementById('delegados-dashboard');
     delegadosDashboard.innerHTML = `<h3>Información de Candidato - Circunscripción ${circunscripcionId}</h3>`;
 
-    // Filtra los recintos por la circunscripción del candidato
     const recintosEnCircunscripcion = recintosData.filter(r => r.circunscripcion_id === circunscripcionId);
     let totalMesas = 0;
     let totalDelegadosRequeridos = 0;
@@ -292,7 +290,8 @@ function displayCandidatoInfo(circunscripcionId) {
 
     if (recintosEnCircunscripcion.length > 0) {
         recintosEnCircunscripcion.forEach(recinto => {
-            const requiredDelegates = recinto.numero_mesas; // Asumimos 1 delegado por mesa
+            // Ensure delegados_requeridos is calculated/available for each recinto
+            const requiredDelegates = recinto.delegados_requeridos || recinto.numero_mesas; 
             const assignedDelegates = usuariosData.filter(u => u.rol === 'delegado' && u.recinto_asignado_id === (recinto._id || recinto.id)).length;
 
             totalMesas += recinto.numero_mesas;
@@ -346,12 +345,15 @@ function displayJefeRecintoInfo(recintoId) {
 
     const recintoAsignado = recintosData.find(r => (r._id || r.id) === recintoId);
     if (recintoAsignado) {
+        // Ensure delegados_requeridos is calculated/available
+        const requiredDelegates = recintoAsignado.delegados_requeridos || recintoAsignado.numero_mesas;
+
         const delegadosRecinto = usuariosData.filter(u => u.rol === 'delegado' && u.recinto_asignado_id === (recintoAsignado._id || recintoAsignado.id));
         delegadosDashboard.innerHTML += `
             <h4>Recinto Asignado: ${recintoAsignado.nombre}</h4>
             <p>Dirección: ${recintoAsignado.direccion || 'N/A'}</p>
             <p>Mesas: ${recintoAsignado.numero_mesas}</p>
-            <p>Delegados Requeridos: ${recintoAsignado.delegados_requeridos}</p>
+            <p>Delegados Requeridos: ${requiredDelegates}</p>
             <p>Delegados Asignados: ${delegadosRecinto.length}</p>
             <h5>Delegados de su Recinto:</h5>
             <ul>
@@ -378,65 +380,101 @@ function displayJefeRecintoInfo(recintoId) {
     }
 }
 
-function displayDelegadoInfo(recintoId) { // Eliminamos circunscripcionId ya que el delegado se enfoca en su recinto/mesa
+// Updated displayDelegadoInfo to handle dynamic button event listener
+function displayDelegadoInfo(recintoId, delegadoId, mesaNumero) { 
     const actasUploadView = document.getElementById('actas-upload-view');
     actasUploadView.innerHTML = `<h3>Subir Acta Electoral</h3>`;
 
-    // Intentamos encontrar al delegado en los datos globales para obtener su mesa_asignada_numero
-    // Si no se encuentra un delegado específico para este recintoId, podríamos usar el primero encontrado o mostrar un mensaje.
-    const delegadoActual = usuariosData.find(u => u.rol === 'delegado' && u.recinto_asignado_id === recintoId);
+    // Try to find the delegate in global data to get their assigned mesa_asignada_numero
+    // Now, we are passed delegateId and mesaNumero directly for the current delegate being simulated
+    const delegadoActual = usuariosData.find(u => u._id === delegadoId);
     
     if (delegadoActual) {
         actasUploadView.innerHTML += `
-            <p>Asignado a: <b>${recintosData.find(r => (r._id || r.id) === recintoId)?.nombre || 'Recinto Desconocido'}</b>, Mesa: <b>${delegadoActual.mesa_asignada_numero}</b></p>
+            <p>Asignado a: <b>${recintosData.find(r => (r._id || r.id) === recintoId)?.nombre || 'Recinto Desconocido'}</b>, Mesa: <b>${mesaNumero}</b></p>
             <input type="file" id="actaFileInput" accept="image/*"><br><br>
-            <!-- <button onclick="handleActaUpload('${delegadoActual._id}', '${recintoId}', ${delegadoActual.mesa_asignada_numero})">Subir Acta</button> -->
-            <button onclick="alert('Todavia no se puede subir fotos')">Subir Acta</button>
+            <button id="uploadActaBtn">Subir Acta</button>
             <p id="uploadMessage"></p>
+            <div id="uploadedImagePreview" style="margin-top: 15px;"></div>
         `;
+
+        // IMPORTANT: Attach event listener AFTER the HTML is rendered
+        const uploadActaBtn = document.getElementById('uploadActaBtn');
+        if (uploadActaBtn) {
+            uploadActaBtn.addEventListener('click', () => {
+                handleActaUpload(
+                    delegadoActual._id,
+                    recintoId,
+                    delegadoActual.mesa_asignada_numero // Use the mesa_asignada_numero from the found delegate
+                );
+            });
+        }
     } else {
         actasUploadView.innerHTML = `<p>Actualmente, no está asignado a un recinto o mesa específica en nuestros datos de prueba.</p>
-                                     <p>Intente seleccionar un rol de delegado con un recinto asignado como "Delegado (R001, Mesa 5)" o "Delegado (R003, Mesa 1)".</p>`;
+                                      <p>Intente seleccionar un rol de delegado con un recinto asignado como "Delegado (R001, Mesa 5)" o "Delegado (R003, Mesa 1)".</p>`;
     }
 }
 
+// Updated handleActaUpload function to use data-attributes for refreshing other sections
 function handleActaUpload(delegadoId, recintoId, mesaNumero) {
     const fileInput = document.getElementById('actaFileInput');
     const uploadMessage = document.getElementById('uploadMessage');
+    const uploadedImagePreview = document.getElementById('uploadedImagePreview'); // New element for preview
+
+    if (!fileInput || !uploadMessage || !uploadedImagePreview) {
+        console.error('Error: Elementos HTML para la subida de acta no encontrados.');
+        return;
+    }
+
     if (fileInput.files.length > 0) {
         const file = fileInput.files[0];
-        
-        // Simular una URL de archivo subido
-        const simulatedUrl = `https://via.placeholder.com/200/FFD700/000000?text=Acta_${recintoId}_M${mesaNumero}_${Date.now()}`;
-        
-        // Simular añadir a `actasData` (solo para el demo en frontend)
-        actasData.push({
-            "_id": `A${Date.now()}`, // ID simulado único
+        let fileUrl = URL.createObjectURL(file); // Use actual blob URL for preview
+
+        // Simulate adding to `actasData`
+        const newActa = {
+            "_id": `A${Date.now()}`, // Unique simulated ID
             "delegado_id": delegadoId,
             "recinto_id": recintoId,
             "mesa_numero": mesaNumero,
-            "url_foto_acta": simulatedUrl,
+            "url_foto_acta": fileUrl,
             "fecha_hora_subida": new Date().toISOString(),
             "estado_revision": "pendiente"
-        });
-        
-        uploadMessage.textContent = `Acta de Mesa ${mesaNumero} subida exitosamente! (URL: ${simulatedUrl})`;
-        uploadMessage.style.color = 'green';
-        console.log('Acta subida simulada:', actasData[actasData.length - 1]);
+        };
+        actasData.push(newActa);
 
-        // Opcional: Actualizar la vista de revisión si el rol actual lo permite
-        const currentUserRole = document.getElementById('role-select').value.split('_')[0];
-        if (currentUserRole === 'jefe_recinto') {
-            displayJefeRecintoInfo(recintoId); // Recargar la info del jefe de recinto para ver la nueva acta
-        } else if (currentUserRole === 'candidato_circunscripcion') {
-            // Encuentra la circunscripción del recinto y recarga la info del candidato
-            const recinto = recintosData.find(r => (r._id || r.id) === recintoId);
-            if (recinto) displayCandidatoInfo(recinto.circunscripcion_id);
+        uploadMessage.textContent = `Acta de Mesa ${mesaNumero} subida exitosamente!`;
+        uploadMessage.style.color = 'green';
+        console.log('Acta subida simulada:', newActa);
+
+        // Display image preview
+        uploadedImagePreview.innerHTML = `
+            <p>Previsualización:</p>
+            <img src="${fileUrl}" alt="Acta Subida" style="max-width: 100%; height: auto; border: 1px solid #ddd; border-radius: 4px;">
+        `;
+
+        // IMPORTANT: Update other views based on the CURRENTLY SELECTED ROLE from the dropdown
+        const roleSelect = document.getElementById('role-select');
+        const currentSelectedOption = roleSelect.options[roleSelect.selectedIndex];
+        const currentRole = currentSelectedOption.value; // e.g., 'admin', 'candidato', 'jefe_recinto'
+        const currentCircunscripcionId = currentSelectedOption.dataset.circunscripcionId || null;
+        const currentRecintoId = currentSelectedOption.dataset.recintoId || null;
+
+        if (currentRole === 'jefe_recinto') {
+            displayJefeRecintoInfo(currentRecintoId); // Recargar la info del jefe de recinto
+        } else if (currentRole === 'candidato') { // Check for 'candidato' base role
+            displayCandidatoInfo(currentCircunscripcionId); // Recargar la info del candidato
+        } else if (currentRole === 'admin') {
+            // Admin sees all, so maybe just refresh general lists if they exist or reload the map
+            // For now, no specific refresh action for admin
         }
+
+        // Clear the file input for future uploads
+        fileInput.value = '';
 
     } else {
         uploadMessage.textContent = 'Por favor, selecciona un archivo de imagen.';
         uploadMessage.style.color = 'red';
+        uploadedImagePreview.innerHTML = ''; // Clear preview if no file selected
     }
 }
 
@@ -454,14 +492,13 @@ function displayDirigenteInfo(circunscripcionId) {
     }
     
     // También podrías mostrar un resumen de la cobertura de delegados para su circunscripción y barrios
-    // Este código es similar al de displayCandidatoInfo, pero lo incluimos aquí para el rol de dirigente.
     const recintosEnCircunscripcion = recintosData.filter(r => r.circunscripcion_id === circunscripcionId);
     let totalMesas = 0;
     let totalDelegadosRequeridos = 0;
     let totalDelegadosAsignados = 0;
 
     recintosEnCircunscripcion.forEach(recinto => {
-        const requiredDelegates = recinto.numero_mesas; // Asumimos 1 delegado por mesa
+        const requiredDelegates = recinto.delegados_requeridos || recinto.numero_mesas; // Ensure required delegates are present
         const assignedDelegates = usuariosData.filter(u => u.rol === 'delegado' && u.recinto_asignado_id === (recinto._id || recinto.id)).length;
 
         totalMesas += recinto.numero_mesas;
