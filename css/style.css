@@ -160,6 +160,11 @@ section th {
     justify-content: center;
 }
 
+.img-acta {
+    width: 100%;
+    max-width: 350px;
+}
+
 /* --- Media Queries for Responsiveness --- */
 
 /* Small screens (e.g., phones) */

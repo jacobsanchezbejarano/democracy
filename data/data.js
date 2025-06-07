@@ -329,7 +329,7 @@ export const actasData = [
     "delegado_id": "U003",
     "recinto_id": "R001",
     "mesa_numero": 5,
-    "url_foto_acta": "https://via.placeholder.com/200/0000FF/FFFFFF?text=Acta_R001_M05_Ejemplo1", // URL de placeholder
+    "url_foto_acta": "https://placehold.co/600x400", // URL de placeholder
     "fecha_hora_subida": "2025-06-07T10:30:00Z",
     "estado_revision": "revisada"
   },
@@ -338,7 +338,7 @@ export const actasData = [
     "delegado_id": "U006",
     "recinto_id": "R003",
     "mesa_numero": 1,
-    "url_foto_acta": "https://via.placeholder.com/200/FF0000/FFFFFF?text=Acta_R003_M01_Ejemplo2", // URL de placeholder
+    "url_foto_acta": "https://placehold.co/600x400", // URL de placeholder
     "fecha_hora_subida": "2025-06-07T11:00:00Z",
     "estado_revision": "pendiente"
   },
@@ -347,7 +347,7 @@ export const actasData = [
     "delegado_id": "U010",
     "recinto_id": "R002",
     "mesa_numero": 1,
-    "url_foto_acta": "https://via.placeholder.com/200/00FF00/FFFFFF?text=Acta_R002_M01_Ejemplo3", // URL de placeholder
+    "url_foto_acta": "https://placehold.co/600x400", // URL de placeholder
     "fecha_hora_subida": "2025-06-07T11:15:00Z",
     "estado_revision": "pendiente"
   },
@@ -356,7 +356,7 @@ export const actasData = [
     "delegado_id": "U011",
     "recinto_id": "R002",
     "mesa_numero": 2,
-    "url_foto_acta": "https://via.placeholder.com/200/FFFF00/000000?text=Acta_R002_M02_Ejemplo4", // URL de placeholder
+    "url_foto_acta": "https://placehold.co/600x400", // URL de placeholder
     "fecha_hora_subida": "2025-06-07T11:45:00Z",
     "estado_revision": "problema" // Simula un acta con problemas
   }

@@ -14,7 +14,21 @@ document.addEventListener('DOMContentLoaded', () => {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
     }).addTo(mymap);
 
-    loadRecintos(); // Cargar los recintos al inicio
+    // Call loadRecintos with initial role (derived from the selected option)
+    const initialRoleSelect = document.getElementById('role-select');
+    const initialSelectedOption = initialRoleSelect.options[initialRoleSelect.selectedIndex];
+    const initialRole = initialSelectedOption.value;
+    const initialCircunscripcionId = initialSelectedOption.dataset.circunscripcionId || null;
+    const initialRecintoId = initialSelectedOption.dataset.recintoId || null;
+
+    // Handle initial circunscripcion for a precinct if not explicitly set
+    let effectiveInitialCircunscripcionId = initialCircunscripcionId;
+    if (initialRecintoId && !effectiveInitialCircunscripcionId) {
+        effectiveInitialCircunscripcionId = recintosData.find(r => r._id === initialRecintoId)?.circunscripcion_id || null;
+    }
+    
+    // Call loadRecintos with the determined initial parameters
+    loadRecintos(initialRole, effectiveInitialCircunscripcionId, initialRecintoId); 
 
     // Manejo de la navegación
     document.getElementById('nav-mapa').addEventListener('click', () => showSection('mapa-container'));
@@ -27,64 +41,56 @@ document.addEventListener('DOMContentLoaded', () => {
     const roleSelect = document.getElementById('role-select');
     const applyRoleBtn = document.getElementById('apply-role-btn');
 
-    // Función para aplicar el rol seleccionado
     const applySelectedRole = () => {
-        const selectedOption = roleSelect.options[roleSelect.selectedIndex]; // Get the selected <option> element
-        const currentUserRole = selectedOption.value; // The basic role (admin, candidato, jefe_recinto, delegado, dirigente)
-
-        // Get data attributes directly from the selected option
+        const selectedOption = roleSelect.options[roleSelect.selectedIndex];
+        const currentUserRole = selectedOption.value;
         let currentUserCircunscripcionId = selectedOption.dataset.circunscripcionId || null;
         let currentUserRecintoId = selectedOption.dataset.recintoId || null;
 
-        // If a recinto is selected, derive its circunscripcion_id if not explicitly set
+        // Determine effective circunscripcion_id for precinct-based roles if not directly set
         if (currentUserRecintoId && !currentUserCircunscripcionId) {
             currentUserCircunscripcionId = recintosData.find(r => r._id === currentUserRecintoId)?.circunscripcion_id || null;
         }
 
-        // Actualizar la UI según el rol (visibilidad de navegación y apariencia)
+        // Update UI (navigation visibility)
         updateUIByRole(currentUserRole);
 
-        // Limpiar contenido de dashboards antes de mostrar nueva información
+        // Clear dashboard content
         document.getElementById('delegados-dashboard').innerHTML = '';
         document.getElementById('dirigentes-list').innerHTML = '';
         document.getElementById('actas-upload-view').innerHTML = '';
         document.getElementById('actas-review-view').innerHTML = '';
 
-        // Mostrar información específica del rol
-        if (currentUserRole === 'candidato') { // Changed from 'candidato_circunscripcion' to 'candidato'
+        // *** Update the map based on the new role and IDs ***
+        loadRecintos(currentUserRole, currentUserCircunscripcionId, currentUserRecintoId);
+
+        // Display role-specific information
+        if (currentUserRole === 'candidato') {
             displayCandidatoInfo(currentUserCircunscripcionId);
         } else if (currentUserRole === 'jefe_recinto') {
             displayJefeRecintoInfo(currentUserRecintoId);
         } else if (currentUserRole === 'delegado') {
-            // Para el delegado, buscamos su asignación real en los usuariosData
-            // y usamos el recintoId del data-attribute o el R001 por defecto si no hay asignación
-            const targetRecintoId = currentUserRecintoId || 'R001'; // Use R001 as default if no specific ID in data-attribute
-            const delegadoTest = usuariosData.find(u => u.rol === 'delegado' && u.recinto_asignado_id === targetRecintoId);
-            
-            if (delegadoTest) {
-                // Pass the found delegate's assigned recinto and their own _id and mesa_numero
-                displayDelegadoInfo(delegadoTest.recinto_asignado_id, delegadoTest._id, delegadoTest.mesa_asignada_numero);
+            const targetRecintoId = currentUserRecintoId || 'R001'; 
+            const delegadoActual = usuariosData.find(u => u.rol === 'delegado' && u.recinto_asignado_id === targetRecintoId);
+            if (delegadoActual) {
+                displayDelegadoInfo(delegadoActual.recinto_asignado_id, delegadoActual._id, delegadoActual.mesa_asignada_numero);
             } else {
                 document.getElementById('actas-upload-view').innerHTML = `<p>No hay un delegado de prueba asignado para el recinto ${targetRecintoId}.</p>
                                                                         <p>Intente seleccionar un rol de delegado con un recinto asignado como "Delegado (R001, Mesa 5)" o "Delegado (R003, Mesa 1)".</p>`;
             }
         } else if (currentUserRole === 'dirigente') {
             displayDirigenteInfo(currentUserCircunscripcionId);
-        } else if (currentUserRole === 'admin') {
-            // Admin role doesn't need specific data display initially, just shows map and all nav options
-            // No specific dashboard info for admin on load other than map
         }
 
-        // Mostrar el mapa por defecto al cambiar de rol para que se vea la diferencia
-        showSection('mapa-container');
+        showSection('mapa-container'); // Show map by default after role change
     };
 
-    // Aplica el rol inicial al cargar la página
-    applySelectedRole();
+    // Apply the initial role on page load
+    applySelectedRole(); // This will now call loadRecintos correctly on initial load
 
-    // Añade el event listener al botón de aplicar rol
     applyRoleBtn.addEventListener('click', applySelectedRole);
 });
+
 
 function showSection(sectionId) {
     document.querySelectorAll('main section').forEach(section => {
@@ -96,42 +102,91 @@ function showSection(sectionId) {
     }
 }
 
-async function loadRecintos() {
+async function loadRecintos(userRole, userCircunscripcionId, userRecintoId) {
     const delegadosPorMesa = 1;
 
+    // Clear existing GeoJSON layers from the map
     mymap.eachLayer(function (layer) {
         if (layer instanceof L.GeoJSON) {
             mymap.removeLayer(layer);
         }
     });
 
-    recintosData.forEach(recinto => {
+    let filteredRecintos = [];
+    let filteredBarrios = [];
+
+    // --- Filter Recintos based on Role ---
+    if (userRole === 'admin') {
+        filteredRecintos = [...recintosData]; // Admin sees all recintos
+    } else if (userRole === 'candidato' || userRole === 'dirigente') {
+        // Candidato and Dirigente see all recintos within their assigned circunscripción
+        if (userCircunscripcionId) {
+            filteredRecintos = recintosData.filter(recinto => 
+                recinto.circunscripcion_id === userCircunscripcionId
+            );
+        } else {
+            console.warn(`Rol ${userRole} requiere circunscripción_id, pero no se proporcionó.`);
+        }
+    } else if (userRole === 'jefe_recinto' || userRole === 'delegado') {
+        // Jefe de Recinto and Delegado see only their assigned recinto
+        if (userRecintoId) {
+            filteredRecintos = recintosData.filter(recinto => 
+                (recinto._id || recinto.id) === userRecintoId
+            );
+        } else {
+            console.warn(`Rol ${userRole} requiere recinto_id, pero no se proporcionó.`);
+        }
+    } else {
+        // Default: no specific role, maybe show nothing or a very limited set
+        filteredRecintos = []; 
+    }
+
+    // --- Filter Barrios based on Role (Optional, but recommended for consistency) ---
+    if (userRole === 'admin') {
+        filteredBarrios = [...barriosData]; // Admin sees all barrios
+    } else if (userRole === 'candidato' || userRole === 'dirigente') {
+        // Candidato and Dirigente see barrios within their assigned circunscripción
+        if (userCircunscripcionId) {
+            filteredBarrios = barriosData.filter(barrio => 
+                barrio.circunscripcion_id === userCircunscripcionId
+            );
+        } else {
+            filteredBarrios = [];
+        }
+    } else {
+        // For Jefe de Recinto and Delegado, you might decide to show no barrios,
+        // or only the barrio their precinct/mesa is in. For simplicity, let's show none for now.
+        filteredBarrios = []; 
+    }
+
+
+    // --- Render Filtered Recintos ---
+    filteredRecintos.forEach(recinto => {
         if (!recinto.numero_mesas) {
             console.warn(`Recinto ${recinto._id || recinto.id} no tiene numero_mesas. Asumiendo 1 mesa.`);
             recinto.numero_mesas = 1;
         }
         
-        // Calculate required delegates if not already present in data
         if (!recinto.delegados_requeridos) {
             recinto.delegados_requeridos = recinto.numero_mesas * delegadosPorMesa;
         }
 
         let fillColor;
-        if (recinto.delegados_asignados >= recinto.delegados_requeridos) { // Use recinto.delegados_requeridos
-            fillColor = '#28a745';
+        if (recinto.delegados_asignados >= recinto.delegados_requeridos) {
+            fillColor = '#28a745'; // Green: Covered
         } else if (recinto.delegados_asignados > 0) {
-            fillColor = '#ffc107';
+            fillColor = '#ffc107'; // Yellow: Partially covered
         } else {
-            fillColor = '#dc3545';
+            fillColor = '#dc3545'; // Red: Not covered
         }
 
         const geojsonFeature = {
             "type": "Feature",
             "properties": {
-                "id": recinto._id || recinto.id, // Usa _id o id
+                "id": recinto._id || recinto.id,
                 "name": recinto.nombre,
                 "mesas": recinto.numero_mesas,
-                "delegados_requeridos": recinto.delegados_requeridos, // Use the calculated/stored value
+                "delegados_requeridos": recinto.delegados_requeridos,
                 "delegados_asignados": recinto.delegados_asignados,
                 "cobertura": (recinto.delegados_asignados / recinto.delegados_requeridos * 100).toFixed(0) + '%'
             },
@@ -179,7 +234,8 @@ async function loadRecintos() {
         }).addTo(mymap);
     });
 
-    barriosData.forEach(barrio => {
+    // --- Render Filtered Barrios ---
+    filteredBarrios.forEach(barrio => {
         if (barrio.ubicacion_geojson && barrio.ubicacion_geojson.type === 'Polygon') {
             L.geoJson(barrio.ubicacion_geojson, {
                 style: {
@@ -327,7 +383,8 @@ function displayCandidatoInfo(circunscripcionId) {
                 ${actasEnCircunscripcion.map(acta => {
                     const recinto = recintosData.find(r => (r._id || r.id) === acta.recinto_id);
                     const delegado = usuariosData.find(u => u._id === acta.delegado_id);
-                    return `<li><b>Recinto: ${recinto?.nombre || 'N/A'}</b>, Mesa ${acta.mesa_numero}: <a href="${acta.url_foto_acta}" target="_blank">Ver Acta</a> (Estado: ${acta.estado_revision}) - Subida por: ${delegado?.nombre || 'N/A'} ${delegado?.apellido || ''}</li>`;
+                    // return `<li><b>Recinto: ${recinto?.nombre || 'N/A'}</b>, Mesa ${acta.mesa_numero}: <a href="${acta.url_foto_acta}" target="_blank">Ver Acta</a> (Estado: ${acta.estado_revision}) - Subida por: ${delegado?.nombre || 'N/A'} ${delegado?.apellido || ''}</li>`;
+                    return `<li><b>Recinto: ${recinto?.nombre || 'N/A'}</b>, Mesa ${acta.mesa_numero}: <a href="${acta.url_foto_acta}" target="_blank"><img class="img-acta" src="${acta.url_foto_acta}"/></a> (Estado: ${acta.estado_revision}) - Subida por: ${delegado?.nombre || 'N/A'} ${delegado?.apellido || ''}</li>`;
                 }).join('')}
             </ul>`;
         } else {
@@ -372,7 +429,8 @@ function displayJefeRecintoInfo(recintoId) {
         actasReviewView.innerHTML += `<ul>
             ${actasRecinto.map(acta => {
                 const delegado = usuariosData.find(u => u._id === acta.delegado_id);
-                return `<li>Mesa ${acta.mesa_numero}: <a href="${acta.url_foto_acta}" target="_blank">Ver Acta</a> (Estado: ${acta.estado_revision}) - Subida por: ${delegado?.nombre || 'N/A'} ${delegado?.apellido || ''}</li>`;
+                // return `<li>Mesa ${acta.mesa_numero}: <a href="${acta.url_foto_acta}" target="_blank">Ver Acta</a> (Estado: ${acta.estado_revision}) - Subida por: ${delegado?.nombre || 'N/A'} ${delegado?.apellido || ''}</li>`+
+                return `<li>Mesa ${acta.mesa_numero}:  <a href="${acta.url_foto_acta}" target="_blank"><img class="img-acta" src="${acta.url_foto_acta}" ></a> (Estado: ${acta.estado_revision}) - Subida por: ${delegado?.nombre || 'N/A'} ${delegado?.apellido || ''}</li>`;
             }).join('')}
         </ul>`;
     } else {
