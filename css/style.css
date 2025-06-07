@@ -1,0 +1,135 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f4f4f4;
+    color: #333;
+}
+
+header {
+    background-color: #0056b3;
+    color: white;
+    padding: 10px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap; /* Allows items to wrap to the next line on smaller screens */
+    gap: 15px; /* Adds space between header elements */
+}
+
+header h1 {
+    margin: 0;
+    font-size: 24px;
+}
+
+/* Navigation Links */
+nav {
+    display: flex;
+    gap: 15px; /* Space out navigation links */
+}
+
+nav a {
+    color: white;
+    text-decoration: none;
+    font-weight: bold;
+    padding: 5px 0; /* Add some padding for better click area */
+    transition: opacity 0.3s ease; /* Smooth transition for opacity changes */
+}
+
+nav a:hover {
+    text-decoration: underline;
+}
+
+/* Style for disabled navigation links */
+nav a.disabled {
+    opacity: 0.5;
+    pointer-events: none; /* Prevents clicking */
+    cursor: not-allowed;
+}
+
+/* Role Selector Container */
+.role-selector-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    /* Removed margin-left: auto; if header is flex, gap handles spacing well */
+}
+
+.role-selector-container label {
+    font-weight: bold;
+    color: white; /* Ensure label is visible */
+}
+
+.role-selector-container select,
+.role-selector-container button {
+    padding: 8px 12px;
+    border-radius: 4px;
+    border: none;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.role-selector-container select {
+    background-color: white;
+    color: #333;
+    border: 1px solid #ccc;
+}
+
+#apply-role-btn {
+    background-color: #28a745; /* Green color for apply button */
+    color: white;
+}
+
+#apply-role-btn:hover {
+    background-color: #218838;
+}
+
+#logout-btn {
+    background-color: #dc3545;
+    color: white;
+}
+
+#logout-btn:hover {
+    background-color: #c82333;
+}
+
+main {
+    padding: 20px;
+}
+
+section {
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+}
+
+.hidden {
+    display: none;
+}
+
+#mapid {
+    height: 600px; /* Adjust height as needed */
+    width: 100%;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+/* IMPORTANT: These CSS classes for Leaflet layers are generally NOT used directly for fillColor.
+   Leaflet applies inline styles or specific internal classes.
+   The coloring logic is primarily handled in app.js using `fillColor` in `L.geoJson` style option.
+   However, if you want to define a custom DivIcon, this can be useful.
+   The `app.js` already uses inline styles for the custom marker icon.
+*/
+/* .recinto-suficiente, .recinto-pocos, .recinto-sin-delegados - these are examples for visual reference,
+   but actual Leaflet styling uses the `style` function directly in JS. */
+
+/* Custom DivIcon for Point features on the map */
+.custom-div-icon {
+    background: none;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
