@@ -390,7 +390,8 @@ function displayDelegadoInfo(recintoId) { // Eliminamos circunscripcionId ya que
         actasUploadView.innerHTML += `
             <p>Asignado a: <b>${recintosData.find(r => (r._id || r.id) === recintoId)?.nombre || 'Recinto Desconocido'}</b>, Mesa: <b>${delegadoActual.mesa_asignada_numero}</b></p>
             <input type="file" id="actaFileInput" accept="image/*"><br><br>
-            <button onclick="handleActaUpload('${delegadoActual._id}', '${recintoId}', ${delegadoActual.mesa_asignada_numero})">Subir Acta</button>
+            <!-- <button onclick="handleActaUpload('${delegadoActual._id}', '${recintoId}', ${delegadoActual.mesa_asignada_numero})">Subir Acta</button> -->
+            <button onclick="alert('Todavia no se puede subir fotos')">Subir Acta</button>
             <p id="uploadMessage"></p>
         `;
     } else {
