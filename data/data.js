@@ -331,7 +331,7 @@ export const actasData = [
     "mesa_numero": 5,
     "url_foto_acta": "https://placehold.co/600x400", // URL de placeholder
     "fecha_hora_subida": "2025-06-07T10:30:00Z",
-    "estado_revision": "revisada"
+    "estado_revision": "aprobado"
   },
   {
     "_id": "A002", // Simulado como string para frontend

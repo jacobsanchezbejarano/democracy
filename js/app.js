@@ -384,7 +384,20 @@ function displayCandidatoInfo(circunscripcionId) {
                     const recinto = recintosData.find(r => (r._id || r.id) === acta.recinto_id);
                     const delegado = usuariosData.find(u => u._id === acta.delegado_id);
                     // return `<li><b>Recinto: ${recinto?.nombre || 'N/A'}</b>, Mesa ${acta.mesa_numero}: <a href="${acta.url_foto_acta}" target="_blank">Ver Acta</a> (Estado: ${acta.estado_revision}) - Subida por: ${delegado?.nombre || 'N/A'} ${delegado?.apellido || ''}</li>`;
-                    return `<li><b>Recinto: ${recinto?.nombre || 'N/A'}</b>, Mesa ${acta.mesa_numero}: <a href="${acta.url_foto_acta}" target="_blank"><img class="img-acta" src="${acta.url_foto_acta}"/></a> (Estado: ${acta.estado_revision}) - Subida por: ${delegado?.nombre || 'N/A'} ${delegado?.apellido || ''}</li>`;
+                    return `<li>
+                        <div class="acta-item-header">
+                            <b>Recinto: ${recinto?.nombre || 'N/A'}</b>, Mesa ${acta.mesa_numero}
+                        </div>
+                        <div class="acta-item-content">
+                            <a href="${acta.url_foto_acta}" target="_blank" class="acta-image-link">
+                                <img class="img-acta" src="${acta.url_foto_acta}" alt="Acta de Mesa ${acta.mesa_numero}"/>
+                            </a>
+                            <div class="acta-details">
+                                <p>Estado: <span class="status-badge status-${acta.estado_revision}">${acta.estado_revision}</span></p>
+                                <p>Subida por: ${delegado?.nombre || 'N/A'} ${delegado?.apellido || ''}</p>
+                            </div>
+                        </div>
+                    </li>`;
                 }).join('')}
             </ul>`;
         } else {
@@ -430,7 +443,18 @@ function displayJefeRecintoInfo(recintoId) {
             ${actasRecinto.map(acta => {
                 const delegado = usuariosData.find(u => u._id === acta.delegado_id);
                 // return `<li>Mesa ${acta.mesa_numero}: <a href="${acta.url_foto_acta}" target="_blank">Ver Acta</a> (Estado: ${acta.estado_revision}) - Subida por: ${delegado?.nombre || 'N/A'} ${delegado?.apellido || ''}</li>`+
-                return `<li>Mesa ${acta.mesa_numero}:  <a href="${acta.url_foto_acta}" target="_blank"><img class="img-acta" src="${acta.url_foto_acta}" ></a> (Estado: ${acta.estado_revision}) - Subida por: ${delegado?.nombre || 'N/A'} ${delegado?.apellido || ''}</li>`;
+                return `<li>
+                            <div class="acta-summary">
+                                <span class="acta-mesa">Mesa ${acta.mesa_numero}:</span>
+                                <span class="acta-estado status-${acta.estado_revision}">${acta.estado_revision}</span>
+                            </div>
+                            <a href="${acta.url_foto_acta}" target="_blank" class="acta-link">
+                                <img class="img-acta" src="${acta.url_foto_acta}" alt="Acta de Mesa ${acta.mesa_numero}">
+                            </a>
+                            <div class="acta-metadata">
+                                <span>Subida por: ${delegado?.nombre || 'N/A'} ${delegado?.apellido || ''}</span>
+                            </div>
+                        </li>`;
             }).join('')}
         </ul>`;
     } else {

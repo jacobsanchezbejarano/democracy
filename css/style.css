@@ -289,3 +289,199 @@ section th {
         height: 500px;
     }
 }
+
+
+/* Estilos para la lista de actas */
+#actas-review-view ul {
+    list-style: none;
+    padding: 0;
+}
+
+#actas-review-view li {
+    background-color: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    padding: 15px;
+    display: flex; /* Usar flexbox para organizar el contenido */
+    flex-direction: column; /* Apilar elementos verticalmente */
+    gap: 10px; /* Espacio entre los elementos hijos */
+}
+
+.acta-item-header {
+    font-size: 1.1em;
+    color: #333;
+    margin-bottom: 5px;
+}
+
+.acta-item-content {
+    display: flex; /* Contenedor para imagen y detalles */
+    align-items: flex-start; /* Alinear arriba si hay diferencia de altura */
+    gap: 15px; /* Espacio entre la imagen y los detalles */
+    flex-wrap: wrap; /* Permitir que los elementos se envuelvan en pantallas pequeñas */
+}
+
+.acta-image-link {
+    flex-shrink: 0; /* Evitar que la imagen se encoja */
+    max-width: 150px; /* Tamaño máximo para la imagen en la lista */
+    border: 1px solid #eee;
+    border-radius: 4px;
+    overflow: hidden; /* Asegurar que la imagen no se salga del borde */
+}
+
+.img-acta {
+    width: 100%; /* La imagen ocupa todo el ancho de su contenedor */
+    height: auto;
+    display: block; /* Eliminar espacio extra debajo de la imagen */
+    max-height: 150px; /* Limitar la altura de la imagen para que no sea demasiado grande en la lista */
+    object-fit: cover; /* Recortar la imagen para que quepa sin distorsionarse */
+}
+
+.acta-details {
+    flex-grow: 1; /* Permitir que los detalles ocupen el espacio restante */
+    font-size: 0.95em;
+    color: #555;
+}
+
+.acta-details p {
+    margin: 5px 0; /* Espacio vertical entre párrafos */
+}
+
+/* Estilos para las insignias de estado */
+.status-badge {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-weight: bold;
+    font-size: 0.85em;
+    text-transform: capitalize;
+    color: white;
+}
+
+.status-pendiente {
+    background-color: #ffc107; /* Amarillo */
+}
+
+.status-aprobado {
+    background-color: #28a745; /* Verde */
+}
+
+.status-problema {
+    background-color: #dc3545; /* Rojo */
+}
+
+@media (max-width: 600px) {
+    .acta-item-content {
+        flex-direction: column; /* Apilar en pantallas pequeñas */
+        align-items: center; /* Centrar la imagen y detalles */
+    }
+    .acta-image-link {
+        max-width: 100%; /* Imagen a todo ancho en móvil */
+    }
+}
+
+/* General styling for the list items */
+#actas-review-view ul {
+    list-style: none; /* Remove default list bullets */
+    padding: 0;
+    margin: 0;
+}
+
+#actas-review-view li {
+    background-color: #ffffff;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px; /* Space between the stacked elements */
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05); /* Subtle shadow for depth */
+}
+
+/* Styling for the summary line (Mesa and Estado) */
+.acta-summary {
+    display: flex;
+    justify-content: space-between; /* Puts mesa on left, status on right */
+    align-items: center;
+    font-size: 1.1em;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 5px;
+}
+
+.acta-mesa {
+    color: #0056b3; /* A nice blue for the mesa number */
+}
+
+/* Styling for the status badge */
+.acta-estado {
+    padding: 4px 10px;
+    border-radius: 20px; /* More rounded pill shape */
+    font-size: 0.8em;
+    text-transform: uppercase;
+    font-weight: bold;
+    color: white;
+    min-width: 80px; /* Ensure consistent width */
+    text-align: center;
+}
+
+/* Status specific colors */
+.status-pendiente {
+    background-color: #ffc107; /* Yellow */
+}
+
+.status-aprobado {
+    background-color: #28a745; /* Green */
+}
+
+.status-rechazado {
+    background-color: #dc3545; /* Red */
+}
+
+/* Styling for the image link container */
+.acta-link {
+    display: block; /* Make the link a block element */
+    width: 100%; /* Take full width */
+    max-width: 250px; /* Limit max width for image preview */
+    margin: 0 auto; /* Center the image link */
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    overflow: hidden; /* Ensures image corners are also rounded */
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    transition: transform 0.2s ease-in-out; /* Smooth hover effect */
+}
+
+.acta-link:hover {
+    transform: scale(1.02); /* Slightly enlarge on hover */
+}
+
+/* Styling for the image itself */
+.img-acta {
+    width: 100%; /* Image fills its container */
+    height: auto; /* Maintain aspect ratio */
+    display: block; /* Remove extra space below image */
+    object-fit: cover; /* Covers the area without distortion */
+    max-height: 200px; /* Limit height to prevent overly large previews */
+}
+
+/* Styling for the uploader metadata */
+.acta-metadata {
+    font-size: 0.85em;
+    color: #666;
+    text-align: right; /* Align to the right */
+    margin-top: 5px;
+}
+
+/* Responsive adjustments for smaller screens */
+@media (max-width: 500px) {
+    .acta-summary {
+        flex-direction: column; /* Stack mesa and estado vertically */
+        align-items: flex-start;
+        gap: 5px;
+    }
+
+    .acta-link {
+        max-width: 100%; /* Image takes full width on small screens */
+    }
+}
