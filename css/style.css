@@ -1,9 +1,15 @@
+* {
+    margin: 0;
+    padding: 0;
+}
+
 body {
     font-family: Arial, sans-serif;
     margin: 0;
     padding: 0;
     background-color: #f4f4f4;
     color: #333;
+    line-height: 1.6; /* Improve readability */
 }
 
 header {
@@ -20,20 +26,25 @@ header {
 header h1 {
     margin: 0;
     font-size: 24px;
+    flex-shrink: 0; /* Prevent heading from shrinking too much */
 }
 
 /* Navigation Links */
 nav {
     display: flex;
     gap: 15px; /* Space out navigation links */
+    flex-wrap: wrap; /* Allow nav links to wrap */
+    justify-content: center; /* Center nav items when wrapped */
+    flex-grow: 1; /* Allow nav to take available space */
 }
 
 nav a {
     color: white;
     text-decoration: none;
     font-weight: bold;
-    padding: 5px 0; /* Add some padding for better click area */
+    padding: 5px 10px; /* Add more padding for better touch targets */
     transition: opacity 0.3s ease; /* Smooth transition for opacity changes */
+    white-space: nowrap; /* Prevent links from breaking mid-word */
 }
 
 nav a:hover {
@@ -52,12 +63,15 @@ nav a.disabled {
     display: flex;
     align-items: center;
     gap: 10px;
-    /* Removed margin-left: auto; if header is flex, gap handles spacing well */
+    flex-wrap: wrap; /* Allow items to wrap within the container */
+    justify-content: center; /* Center items when wrapped */
+    margin-left: auto; /* Push to the right on larger screens */
 }
 
 .role-selector-container label {
     font-weight: bold;
     color: white; /* Ensure label is visible */
+    white-space: nowrap; /* Prevent label from breaking */
 }
 
 .role-selector-container select,
@@ -67,12 +81,14 @@ nav a.disabled {
     border: none;
     font-size: 14px;
     cursor: pointer;
+    white-space: nowrap; /* Prevent buttons/select from breaking text */
 }
 
 .role-selector-container select {
     background-color: white;
     color: #333;
     border: 1px solid #ccc;
+    min-width: 150px; /* Ensure select has a minimum width */
 }
 
 #apply-role-btn {
@@ -103,7 +119,26 @@ section {
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     margin-bottom: 20px;
+    overflow-x: auto; /* Allow horizontal scrolling for content that overflows */
 }
+
+/* Basic styling for tables within sections for responsiveness */
+section table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+}
+
+section th, section td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+}
+
+section th {
+    background-color: #f2f2f2;
+}
+
 
 .hidden {
     display: none;
@@ -116,15 +151,6 @@ section {
     border-radius: 4px;
 }
 
-/* IMPORTANT: These CSS classes for Leaflet layers are generally NOT used directly for fillColor.
-   Leaflet applies inline styles or specific internal classes.
-   The coloring logic is primarily handled in app.js using `fillColor` in `L.geoJson` style option.
-   However, if you want to define a custom DivIcon, this can be useful.
-   The `app.js` already uses inline styles for the custom marker icon.
-*/
-/* .recinto-suficiente, .recinto-pocos, .recinto-sin-delegados - these are examples for visual reference,
-   but actual Leaflet styling uses the `style` function directly in JS. */
-
 /* Custom DivIcon for Point features on the map */
 .custom-div-icon {
     background: none;
@@ -132,4 +158,129 @@ section {
     display: flex;
     align-items: center;
     justify-content: center;
+}
+
+/* --- Media Queries for Responsiveness --- */
+
+/* Small screens (e.g., phones) */
+@media (max-width: 768px) {
+    header {
+        flex-direction: column; /* Stack header items vertically */
+        align-items: stretch; /* Stretch items to full width */
+        padding: 10px;
+    }
+
+    header h1 {
+        text-align: center;
+        margin-bottom: 10px;
+    }
+
+    nav {
+        flex-direction: column; /* Stack nav links vertically */
+        align-items: center;
+        width: 100%; /* Take full width */
+        gap: 8px; /* Reduce gap for stacked items */
+        margin-bottom: 10px;
+    }
+
+    nav a {
+        padding: 8px 15px; /* Increase padding for better touch targets */
+        width: calc(100% - 30px); /* Adjust width to account for padding */
+        text-align: center;
+        background-color: rgba(255, 255, 255, 0.1); /* Slightly visible background */
+        border-radius: 4px;
+    }
+
+    .role-selector-container {
+        flex-direction: column; /* Stack role selector items vertically */
+        align-items: stretch; /* Stretch items to full width */
+        width: 100%;
+        margin-left: 0; /* Remove auto margin */
+        gap: 8px;
+    }
+
+    .role-selector-container label {
+        text-align: center;
+    }
+
+    .role-selector-container select,
+    .role-selector-container button {
+        width: 100%; /* Make select and buttons full width */
+        box-sizing: border-box; /* Include padding/border in width */
+    }
+
+    main {
+        padding: 10px; /* Reduce main padding */
+    }
+
+    section {
+        padding: 15px; /* Reduce section padding */
+    }
+
+    #mapid {
+        height: 400px; /* Make map a bit shorter on small screens */
+    }
+
+    .grid {
+        display: grid;
+        /* Define two rows. The first for the role selector, the second for navigation. */
+        grid-template-rows: auto auto; /* 'auto' means rows will size to their content */
+        /* You might want a small gap between rows */
+        row-gap: 15px;
+        /* If you want to center these items within the grid */
+        justify-items: center; /* Centers content horizontally within its grid area */
+        align-items: center; /* Centers content vertically within its grid area */
+    }
+
+    /* Ensure the nav and role-selector-container take their assigned grid areas */
+    nav {
+        grid-row: 2; /* This places the navigation in the second row */
+        /* Other nav styles remain as before */
+        display: flex;
+        gap: 15px;
+        flex-wrap: wrap;
+        justify-content: center;
+        flex-grow: 1;
+    }
+
+    .role-selector-container {
+        grid-row: 1; /* This places the role selector in the first row */
+        /* Other role-selector-container styles remain as before */
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+}
+
+/* Medium screens (e.g., tablets) */
+@media (min-width: 769px) and (max-width: 1024px) {
+    header {
+        padding: 15px;
+    }
+
+    header h1 {
+        font-size: 22px;
+    }
+
+    nav {
+        flex-grow: 0; /* Don't force nav to take full space */
+    }
+
+    .role-selector-container {
+        margin-left: auto; /* Keep it pushed to the right */
+    }
+
+    main {
+        padding: 15px;
+    }
+
+    section {
+        padding: 20px;
+    }
+
+    #mapid {
+        height: 500px;
+    }
 }

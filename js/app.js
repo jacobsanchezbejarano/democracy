@@ -21,7 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('nav-delegados').addEventListener('click', () => showSection('delegados-container'));
     document.getElementById('nav-dirigentes').addEventListener('click', () => showSection('dirigentes-container'));
     document.getElementById('nav-actas').addEventListener('click', () => showSection('actas-container'));
-    document.getElementById('logout-btn').addEventListener('click', () => alert('Cerrar sesión (implementar lógica de autenticación)'));
+    // document.getElementById('logout-btn').addEventListener('click', () => alert('Cerrar sesión (implementar lógica de autenticación)'));
 
     // --- Lógica del selector de rol ---
     const roleSelect = document.getElementById('role-select');
