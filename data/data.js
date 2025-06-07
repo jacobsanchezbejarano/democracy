@@ -24,14 +24,10 @@ export const recintosData = [
     "numero_mesas": 5,
     "delegados_asignados": 5, // Simulación: 100% de cobertura
     "ubicacion_geojson": {
-        "type": "Polygon",
-        "coordinates": [[
-            [-63.1700, -17.7900],
-            [-63.1650, -17.7900],
-            [-63.1650, -17.7950],
-            [-63.1700, -17.7950],
+        "type": "Point",
+        "coordinates": 
             [-63.1700, -17.7900]
-        ]]
+        
     }
   },
   {
@@ -90,14 +86,10 @@ export const recintosData = [
     "numero_mesas": 7,
     "delegados_asignados": 7, // Simulación: 100% de cobertura
     "ubicacion_geojson": {
-        "type": "Polygon",
-        "coordinates": [[
-            [-63.1900, -17.7500],
-            [-63.1850, -17.7500],
-            [-63.1850, -17.7550],
-            [-63.1900, -17.7550],
+        "type": "Point",
+        "coordinates": 
             [-63.1900, -17.7500]
-        ]]
+        
     }
   }
 ];
